@@ -45,6 +45,9 @@ Who currently answers a Conversation: the Agent or a human in the Channel.
 **Handoff**:
 The moment a human takes over a Conversation in the Channel; from then on the Agent can no longer write to it.
 
+**Reopen Policy**:
+Who answers first when a contact writes to a resolved Conversation: the Agent (default), the last human, or never the Agent. Configured per Account; without an Agent the Conversation goes straight to the Channel.
+
 **Bridge Protocol**:
 byo-chat's own contract with destinations: Canonical Events in a CloudEvents envelope, delivered by signed webhook or local WebSocket, accepted through the local API or WebSocket, and exposed to Agents via MCP.
 
