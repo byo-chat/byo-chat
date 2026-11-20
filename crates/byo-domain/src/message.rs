@@ -7,6 +7,15 @@ pub struct ConversationId(pub String);
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NetworkMessageId(pub String);
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Timestamp(pub i64);
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PendingOutbound {
+    pub message: OutboundText,
+    pub enqueued_at: Timestamp,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct OutboundId(pub String);
 
