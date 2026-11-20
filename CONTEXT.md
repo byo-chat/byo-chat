@@ -1,55 +1,55 @@
 # byo-chat
 
-Ponte local que mantém contas de redes de mensagem conectadas via CLIs/bridges de terceiros e as expõe ao Chatwoot como canais de atendimento.
+Local bridge that keeps messaging-network accounts connected through third-party CLIs/bridges and exposes them to Chatwoot as support channels.
 
 ## Language
 
-**Rede**:
-Serviço de mensagens externo (WhatsApp, Telegram, Instagram, LinkedIn, X, Teams).
-_Avoid_: plataforma, provider
+**Network**:
+External messaging service (WhatsApp, Telegram, Instagram, LinkedIn, X, Teams).
+_Avoid_: platform, provider
 
-**Conta**:
-Uma identidade autenticada do usuário numa Rede. Uma Rede pode ter várias Contas.
-_Avoid_: sessão, perfil
+**Account**:
+One authenticated user identity on a Network. A Network may have many Accounts.
+_Avoid_: session, profile
 
-**Conector**:
-Software de terceiros (CLI ou bridge) que o byo-chat supervisiona para operar Contas de uma Rede.
+**Account State**:
+New, Authenticating, Connected, Reconnecting, Disconnected, Expired (requires re-login) or Paused (by the user). Expired raises an alert in the tray and a system message in the Channel.
+
+**Connector**:
+Third-party software (CLI or bridge) that byo-chat supervises to operate Accounts on a Network.
 _Avoid_: driver, plugin
 
-**Estratégia**:
-Forma como o byo-chat conversa com um Conector: Stream, Poll ou Matrix.
+**Strategy**:
+How byo-chat talks to a Connector: Stream, Poll or Matrix.
 
-**Manifesto de Conector**:
-Descrição declarativa de um Conector: Rede, Estratégia, binário e versão, comandos de evento/envio/saúde e mapeamento para a Mensagem canônica.
+**Connector Manifest**:
+Declarative description of a Connector: Network, Strategy, pinned binary and version, event/send/health commands, login kind, and mapping to Canonical Events.
 
-**Evento canônico**:
-Unidade comum de entrada e saída da Ponte (mensagem, mídia, reação, edição, exclusão, recibo, resposta, entrada/saída de membro), com semântica dos eventos Matrix e esquema próprio versionado (`byo.*.v1`).
-_Avoid_: payload, mensagem do Chatwoot
+**Canonical Event**:
+The common input/output unit of the Bridge (message, media, reaction, edit, deletion, receipt, reply, member join/leave), following Matrix event semantics with an own versioned schema (`byo.*.v1`).
+_Avoid_: payload, Chatwoot message
 
-**Conversa**:
-Diálogo numa Conta: direta (1:1) ou grupo. Grupos são suportados mesmo quando o destino não os suporta.
+**Conversation**:
+A dialogue within an Account: direct (1:1) or group. Groups are supported even when the destination does not support them.
 
-**Estado da Conta**:
-Nova, Autenticando, Conectada, Reconectando, Desconectada, Expirada (exige novo login) ou Pausada (pelo usuário). Expirada gera alerta no tray e mensagem de sistema no Canal.
+**Channel**:
+A Chatwoot inbox bound to exactly one Account.
+_Avoid_: inbox (in domain code)
 
-**Canal**:
-Inbox do Chatwoot vinculado a exatamente uma Conta.
-_Avoid_: inbox (no código de domínio)
-
-**Ponte**:
-O papel do byo-chat: transportar mensagens entre Conta e Canal nos dois sentidos.
+**Bridge**:
+byo-chat's role: carrying events between Account and Channel in both directions.
 
 ## Relationships
 
-- Uma **Rede** tem um ou mais **Conectores** possíveis; cada **Conta** usa exatamente um **Conector**
-- Cada **Conector** é descrito por um **Manifesto** e usa uma **Estratégia**
-- Cada **Conta** mapeia para exatamente um **Canal** (1:1)
+- A **Network** has one or more possible **Connectors**; each **Account** uses exactly one **Connector**
+- Each **Connector** is described by a **Connector Manifest** and uses one **Strategy**
+- Each **Account** maps to exactly one **Channel** (1:1)
 
 ## Flagged ambiguities
 
-- "nat" — resolvido: não é NATS nem NAT traversal embutido; fila é local (ver ADR-0001).
-- Referência de cobertura: WhatsApp (wacli) e Telegram; demais Redes se adaptam.
-- Licença: MIT (mantida; Conectores AGPL ficam isolados como processos).
-- Sessão da Rede pertence ao Conector (pasta por Conta); segredos do byo-chat ficam no cofre do SO.
-- Saída pendente aguarda reconexão até um prazo configurável; depois vira falha visível no Canal.
-- Risco de banimento: responsabilidade do usuário, exibido como disclaimer; o byo-chat não tenta mitigar.
+- "nat" — resolved: neither NATS nor embedded NAT traversal; the queue is local (see ADR-0001).
+- Coverage reference: WhatsApp (wacli) and Telegram; other Networks adapt to them.
+- License: MIT (kept; AGPL Connectors stay isolated as separate processes).
+- Network session data belongs to the Connector (one folder per Account); byo-chat secrets live in the OS keychain.
+- Pending outbound events wait for reconnection up to a configurable deadline, then surface as a visible failure in the Channel.
+- Ban risk: the user's responsibility, shown as a disclaimer; byo-chat does not try to mitigate it.
