@@ -1,0 +1,19 @@
+cognitive-complexity-threshold = 10
+too-many-arguments-threshold = 5
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+allow-dbg-in-tests = true
+allow-print-in-tests = true
+allow-panic-in-tests = true
+allow-indexing-slicing-in-tests = true
+disallowed-methods = [
+  { path = "std::process::exit", reason = "exit skips every Drop: temp files, flushes and locks stay as they are. Return from main" },
+  { path = "std::env::set_var", reason = "changing the environment while another thread reads it is undefined behavior" },
+  { path = "std::env::remove_var", reason = "changing the environment while another thread reads it is undefined behavior" },
+  { path = "std::env::var", reason = "read the environment only in byo-chat's config module (ADR-0013)" },
+  { path = "std::env::var_os", reason = "read the environment only in byo-chat's config module (ADR-0013)" },
+  { path = "std::env::vars", reason = "read the environment only in byo-chat's config module (ADR-0013)" },
+  { path = "std::process::Command::new", reason = "start processes only through byo_connector::spawn (ADR-0013)" },
+  { path = "tokio::process::Command::new", reason = "start processes only through byo_connector::spawn (ADR-0013)" },
+]
+disallowed-types = []

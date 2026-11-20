@@ -1,6 +1,3 @@
-//! Accounts: one authenticated identity on a Network.
-
-/// Lifecycle of an Account, as defined in `CONTEXT.md`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AccountState {
     New,
@@ -13,7 +10,6 @@ pub enum AccountState {
 }
 
 impl AccountState {
-    /// Whether the Account needs the user to log in again.
     #[must_use]
     pub const fn needs_login(self) -> bool {
         matches!(self, Self::New | Self::Expired)

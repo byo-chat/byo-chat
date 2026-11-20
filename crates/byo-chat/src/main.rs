@@ -1,5 +1,3 @@
-//! byo-chat binary: composition root, daemon and console subcommands (ADR-0004).
-
 mod config;
 mod logging;
 

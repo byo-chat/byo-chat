@@ -1,5 +1,7 @@
-//! The only module allowed to write to stdout or stderr.
-
-pub fn info(message: &str) {
+#[expect(
+    clippy::print_stderr,
+    reason = "logging owns process output (ADR-0013)"
+)]
+pub(crate) fn info(message: &str) {
     eprintln!("{message}");
 }
