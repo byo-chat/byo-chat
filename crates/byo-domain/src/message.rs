@@ -14,6 +14,8 @@ pub struct Timestamp(pub i64);
 pub struct PendingOutbound {
     pub message: OutboundText,
     pub enqueued_at: Timestamp,
+    pub attempts: u32,
+    pub next_attempt_at: Timestamp,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

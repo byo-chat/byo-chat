@@ -24,6 +24,11 @@ pub trait OutboundQueue {
     fn pending(&mut self, account: &AccountId) -> Result<Vec<PendingOutbound>, Self::Error>;
     fn mark_sent(&mut self, id: &OutboundId) -> Result<(), Self::Error>;
     fn dead_letter(&mut self, id: &OutboundId) -> Result<(), Self::Error>;
+    fn record_failure(
+        &mut self,
+        id: &OutboundId,
+        next_attempt_at: Timestamp,
+    ) -> Result<(), Self::Error>;
 }
 
 pub trait ConnectorPort {
@@ -33,4 +38,8 @@ pub trait ConnectorPort {
 
 pub trait Clock {
     fn now(&self) -> Timestamp;
+}
+
+pub trait Rng {
+    fn below(&mut self, upper: i64) -> i64;
 }

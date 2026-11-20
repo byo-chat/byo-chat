@@ -51,6 +51,8 @@ impl SqliteEventStore {
                 conversation TEXT NOT NULL,
                 text TEXT NOT NULL,
                 enqueued_at INTEGER NOT NULL,
+                attempts INTEGER NOT NULL DEFAULT 0,
+                next_attempt_at INTEGER NOT NULL DEFAULT 0,
                 state TEXT NOT NULL DEFAULT 'pending'
             );",
         )?;
@@ -105,7 +107,7 @@ impl OutboundQueue for SqliteEventStore {
 
     fn pending(&mut self, account: &AccountId) -> Result<Vec<PendingOutbound>, StoreError> {
         let mut statement = self.connection.prepare(
-            "SELECT id, conversation, text, enqueued_at FROM outbound
+            "SELECT id, conversation, text, enqueued_at, attempts, next_attempt_at FROM outbound
              WHERE account = ?1 AND state = 'pending' ORDER BY seq",
         )?;
         let rows = statement.query_map([&account.0], |row| {
@@ -117,6 +119,8 @@ impl OutboundQueue for SqliteEventStore {
                     text: row.get(2)?,
                 },
                 enqueued_at: Timestamp(row.get(3)?),
+                attempts: row.get(4)?,
+                next_attempt_at: Timestamp(row.get(5)?),
             })
         })?;
         Ok(rows.collect::<Result<_, _>>()?)
@@ -125,6 +129,18 @@ impl OutboundQueue for SqliteEventStore {
     fn mark_sent(&mut self, id: &OutboundId) -> Result<(), StoreError> {
         self.connection
             .execute("UPDATE outbound SET state = 'sent' WHERE id = ?1", [&id.0])?;
+        Ok(())
+    }
+
+    fn record_failure(
+        &mut self,
+        id: &OutboundId,
+        next_attempt_at: Timestamp,
+    ) -> Result<(), StoreError> {
+        self.connection.execute(
+            "UPDATE outbound SET attempts = attempts + 1, next_attempt_at = ?2 WHERE id = ?1",
+            (&id.0, next_attempt_at.0),
+        )?;
         Ok(())
     }
 
