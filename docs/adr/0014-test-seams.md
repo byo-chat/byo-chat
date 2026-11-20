@@ -1,5 +1,7 @@
 # Test seams
 
+Status: accepted
+
 Tests verify behaviour through public interfaces, at seams agreed in advance; no test is written at another seam without a new decision. For v0.1:
 
 1. Domain rules (`byo-domain`): Account State transitions, Handoff, Reopen Policy, redaction. Pure and fast.

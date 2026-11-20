@@ -1,5 +1,7 @@
 # One SQLite database per Account, single writer, at-least-once delivery
 
+Status: proposed
+
 Expected load is tens of events per second at peak on one machine; SQLite in WAL mode handles far more, but allows one writer per file. Storage is therefore split into a small `control.db` (config, Accounts, Channels, Manifests) and one `accounts/{id}/history.db` per Account holding its events, queues and media index. This gives real write parallelism across Accounts, failure isolation, trivial per-Account backup/export, and crypto-shredding on removal (each Account has its own SQLCipher key). Cross-Account search fans out and merges.
 
 Within each database a single writer task per Account batches writes in transactions; reads use a read-only connection pool (`journal_mode=WAL`, `synchronous=NORMAL`, `busy_timeout`), so `SQLITE_BUSY` is avoided by design.
