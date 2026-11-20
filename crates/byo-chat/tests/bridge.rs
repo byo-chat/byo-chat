@@ -7,11 +7,14 @@ use std::cell::Cell;
 use std::convert::Infallible;
 
 use byo_app::ingest::ingest_inbound_text;
-use byo_app::outbound::{DEFAULT_DEADLINE_SECONDS, DeliveryPolicy, deliver_pending, submit_reply};
+use byo_app::outbound::{
+    DEFAULT_DEADLINE_SECONDS, DeliveryPolicy, Timing, backoff_seconds, deliver_pending,
+    submit_reply,
+};
 use byo_domain::message::{
     AccountId, ConversationId, InboundText, NetworkMessageId, OutboundId, OutboundText, Timestamp,
 };
-use byo_domain::ports::{Clock, ConnectorPort, DestinationPort};
+use byo_domain::ports::{Clock, ConnectorPort, DestinationPort, Rng};
 use byo_store::SqliteEventStore;
 
 #[derive(Debug, Default)]
@@ -20,6 +23,24 @@ struct ManualClock(Cell<i64>);
 impl Clock for ManualClock {
     fn now(&self) -> Timestamp {
         Timestamp(self.0.get())
+    }
+}
+
+#[derive(Debug, Default)]
+struct NoJitter;
+
+impl Rng for NoJitter {
+    fn below(&mut self, _upper: i64) -> i64 {
+        0
+    }
+}
+
+#[derive(Debug)]
+struct MaxJitter;
+
+impl Rng for MaxJitter {
+    fn below(&mut self, upper: i64) -> i64 {
+        upper - 1
     }
 }
 
@@ -105,9 +126,12 @@ fn a_reply_reaches_the_connector() {
     deliver_pending(
         &mut store,
         &mut connector,
-        &clock,
+        &mut Timing {
+            clock: &clock,
+            rng: &mut NoJitter,
+            policy: DeliveryPolicy::default(),
+        },
         &AccountId(String::from("wa-1")),
-        DeliveryPolicy::default(),
     )
     .unwrap();
 
@@ -126,17 +150,23 @@ fn a_reply_is_sent_once_when_delivery_runs_twice() {
     deliver_pending(
         &mut store,
         &mut connector,
-        &clock,
+        &mut Timing {
+            clock: &clock,
+            rng: &mut NoJitter,
+            policy: DeliveryPolicy::default(),
+        },
         &account,
-        DeliveryPolicy::default(),
     )
     .unwrap();
     deliver_pending(
         &mut store,
         &mut connector,
-        &clock,
+        &mut Timing {
+            clock: &clock,
+            rng: &mut NoJitter,
+            policy: DeliveryPolicy::default(),
+        },
         &account,
-        DeliveryPolicy::default(),
     )
     .unwrap();
 
@@ -155,9 +185,12 @@ fn a_reply_submitted_twice_is_sent_once() {
     deliver_pending(
         &mut store,
         &mut connector,
-        &clock,
+        &mut Timing {
+            clock: &clock,
+            rng: &mut NoJitter,
+            policy: DeliveryPolicy::default(),
+        },
         &AccountId(String::from("wa-1")),
-        DeliveryPolicy::default(),
     )
     .unwrap();
 
@@ -211,19 +244,26 @@ fn a_failing_conversation_holds_its_order_without_blocking_others() {
     deliver_pending(
         &mut store,
         &mut connector,
-        &clock,
+        &mut Timing {
+            clock: &clock,
+            rng: &mut NoJitter,
+            policy: DeliveryPolicy::default(),
+        },
         &account,
-        DeliveryPolicy::default(),
     )
     .unwrap();
     let while_down = connector.sent.clone();
     connector.failing = None;
+    clock.0.set(1);
     deliver_pending(
         &mut store,
         &mut connector,
-        &clock,
+        &mut Timing {
+            clock: &clock,
+            rng: &mut NoJitter,
+            policy: DeliveryPolicy::default(),
+        },
         &account,
-        DeliveryPolicy::default(),
     )
     .unwrap();
 
@@ -245,12 +285,41 @@ fn a_reply_past_its_deadline_becomes_a_dead_letter() {
     submit_reply(&mut store, &clock, &reply_to_maria()).unwrap();
 
     clock.0.set(DEFAULT_DEADLINE_SECONDS);
-    let at_deadline =
-        deliver_pending(&mut store, &mut connector, &clock, &account, policy).unwrap();
+    let at_deadline = deliver_pending(
+        &mut store,
+        &mut connector,
+        &mut Timing {
+            clock: &clock,
+            rng: &mut NoJitter,
+            policy,
+        },
+        &account,
+    )
+    .unwrap();
     clock.0.set(DEFAULT_DEADLINE_SECONDS + 1);
-    let past = deliver_pending(&mut store, &mut connector, &clock, &account, policy).unwrap();
+    let past = deliver_pending(
+        &mut store,
+        &mut connector,
+        &mut Timing {
+            clock: &clock,
+            rng: &mut NoJitter,
+            policy,
+        },
+        &account,
+    )
+    .unwrap();
     connector.failing = None;
-    let after = deliver_pending(&mut store, &mut connector, &clock, &account, policy).unwrap();
+    let after = deliver_pending(
+        &mut store,
+        &mut connector,
+        &mut Timing {
+            clock: &clock,
+            rng: &mut NoJitter,
+            policy,
+        },
+        &account,
+    )
+    .unwrap();
 
     assert_eq!(at_deadline.failed.len(), 1);
     assert_eq!(
@@ -261,4 +330,80 @@ fn a_reply_past_its_deadline_becomes_a_dead_letter() {
         (after.sent, after.dead_lettered, connector.sent),
         (Vec::new(), Vec::new(), Vec::new())
     );
+}
+
+#[test]
+fn a_failed_reply_waits_its_backoff_before_the_next_attempt() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut store = SqliteEventStore::open(&dir.path().join("history.db")).unwrap();
+    let clock = ManualClock::default();
+    let account = AccountId(String::from("wa-1"));
+    let policy = DeliveryPolicy::default();
+    let mut connector = ConnectorFailing {
+        failing: Some(OutboundId(String::from("cw-msg-42"))),
+        ..ConnectorFailing::default()
+    };
+    submit_reply(&mut store, &clock, &reply_to_maria()).unwrap();
+
+    let first = deliver_pending(
+        &mut store,
+        &mut connector,
+        &mut Timing {
+            clock: &clock,
+            rng: &mut NoJitter,
+            policy,
+        },
+        &account,
+    )
+    .unwrap();
+    connector.failing = None;
+    let too_early = deliver_pending(
+        &mut store,
+        &mut connector,
+        &mut Timing {
+            clock: &clock,
+            rng: &mut NoJitter,
+            policy,
+        },
+        &account,
+    )
+    .unwrap();
+    clock.0.set(1);
+    let due = deliver_pending(
+        &mut store,
+        &mut connector,
+        &mut Timing {
+            clock: &clock,
+            rng: &mut NoJitter,
+            policy,
+        },
+        &account,
+    )
+    .unwrap();
+
+    assert_eq!(first.failed.len(), 1);
+    assert_eq!(too_early.sent, Vec::<OutboundId>::new());
+    assert_eq!(due.sent, vec![OutboundId(String::from("cw-msg-42"))]);
+}
+
+#[test]
+fn backoff_doubles_from_one_second_up_to_five_minutes_plus_jitter() {
+    let rows = [
+        (1, 1, 1),
+        (2, 2, 3),
+        (3, 4, 6),
+        (9, 256, 300),
+        (10, 300, 300),
+        (40, 300, 300),
+    ];
+    for (attempts, without_jitter, with_max_jitter) in rows {
+        assert_eq!(
+            (
+                backoff_seconds(attempts, &mut NoJitter),
+                backoff_seconds(attempts, &mut MaxJitter)
+            ),
+            (without_jitter, with_max_jitter),
+            "attempts {attempts}"
+        );
+    }
 }

@@ -1,7 +1,15 @@
-use byo_domain::message::{AccountId, ConversationId, OutboundId, OutboundText};
-use byo_domain::ports::{Clock, ConnectorPort, OutboundQueue, Recorded};
+use byo_domain::message::{AccountId, ConversationId, OutboundId, OutboundText, Timestamp};
+use byo_domain::ports::{Clock, ConnectorPort, OutboundQueue, Recorded, Rng};
 
 pub const DEFAULT_DEADLINE_SECONDS: i64 = 24 * 60 * 60;
+pub const MAX_BACKOFF_SECONDS: i64 = 5 * 60;
+
+pub fn backoff_seconds(attempts: u32, rng: &mut impl Rng) -> i64 {
+    let base = 1_i64
+        .checked_shl(attempts.saturating_sub(1))
+        .map_or(MAX_BACKOFF_SECONDS, |delay| delay.min(MAX_BACKOFF_SECONDS));
+    (base + rng.below(base / 2 + 1)).min(MAX_BACKOFF_SECONDS)
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DeliveryPolicy {
@@ -14,6 +22,13 @@ impl Default for DeliveryPolicy {
             deadline_seconds: DEFAULT_DEADLINE_SECONDS,
         }
     }
+}
+
+#[derive(Debug)]
+pub struct Timing<'a, K, R> {
+    pub clock: &'a K,
+    pub rng: &'a mut R,
+    pub policy: DeliveryPolicy,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -34,10 +49,10 @@ pub fn submit_reply<Q: OutboundQueue>(
 pub fn deliver_pending<Q: OutboundQueue, C: ConnectorPort>(
     queue: &mut Q,
     connector: &mut C,
-    clock: &impl Clock,
+    timing: &mut Timing<'_, impl Clock, impl Rng>,
     account: &AccountId,
-    policy: DeliveryPolicy,
 ) -> Result<DeliveryReport<C::Error>, Q::Error> {
+    let Timing { clock, rng, policy } = timing;
     let now = clock.now();
     let mut report = DeliveryReport {
         sent: Vec::new(),
@@ -55,12 +70,18 @@ pub fn deliver_pending<Q: OutboundQueue, C: ConnectorPort>(
             report.dead_lettered.push(message.id);
             continue;
         }
+        if pending.next_attempt_at > now {
+            held.push(message.conversation);
+            continue;
+        }
         match connector.send(&message) {
             Ok(()) => {
                 queue.mark_sent(&message.id)?;
                 report.sent.push(message.id);
             }
             Err(error) => {
+                let wait = backoff_seconds(pending.attempts + 1, *rng);
+                queue.record_failure(&message.id, Timestamp(now.0 + wait))?;
                 held.push(message.conversation);
                 report.failed.push((message.id, error));
             }
