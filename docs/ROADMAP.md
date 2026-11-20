@@ -4,9 +4,9 @@ Each release is a vertical slice; v0.1 is a tracer bullet through every layer wi
 
 | Release | Scope |
 |---|---|
-| v0.1 | WhatsApp via wacli (Stream Strategy, Connector Manifest); Canonical Event schema designed in full, text + media implemented; SQLite queue and history (unencrypted); Chatwoot adapter (auto-provisioned inbox, 1:1, outbound polling); daemon + console (`status`, `health`, `accounts`); minimal web UI (QR linking, Account State) |
+| v0.1 | WhatsApp via wacli (Stream Strategy, Connector Manifest); Canonical Event schema designed in full, text + media implemented; SQLite queue and history (unencrypted); Chatwoot adapter (auto-provisioned inbox, 1:1, outbound polling); daemon + console (`status`, `health`, `accounts`); minimal web UI (QR linking, Account State) with the Fluent text catalog (ADR-0015) |
 | v0.2 | Telegram (Poll Strategy); reactions, edits, redactions, receipts; SQLCipher; `byo.interactive.v1` with fallback; optional `wa-infinite` Connector |
 | v0.3 | MCP adapter (read-only, then write with Handoff); groups |
-| v0.4 | Tauri tray shell; Windows background/Linux systemd service; Connector registry with pinned hashes and approved updates |
+| v0.4 | Tauri tray shell; Windows background/Linux systemd service; Connector registry with pinned hashes and approved updates; signed Self-Update (ADR-0016); native autostart (ADR-0004 amendment) |
 | v0.5 | Instagram and Teams (Poll Strategy) |
 | v0.6 | LinkedIn (Matrix Strategy + embedded Conduit) |
