@@ -16,3 +16,15 @@ All work (Connector supervision, queue, Chatwoot sync, health checks) lives in o
 - It is on by default, offered as a pre-checked option at first setup, and can be turned off at any time in the web UI settings or with `byo-chat autostart enable|disable|status`.
 - byo-chat reads the state from the OS (the Run entry, the systemd unit) instead of keeping its own flag, so a change made in Task Manager or systemctl shows correctly. A system service shows as "managed by the system service" and cannot be changed from byo-chat.
 - Uninstalling removes the autostart entry.
+
+## Amendment 2026-11-20 — main screen layout
+
+Chosen from the prototype on branch `prototype/main-screen` (variant I, see its `NOTES.md`):
+
+- Left sidebar: Accounts grouped by Network in a fixed order, each Network with its official logo and a Connect action; each Account shows an avatar with a Network badge, its label and an Account State dot.
+- Right panel: the selected Account's detail, with two tabs, Overview and Connector logs.
+- Overview: a metric strip with 7-day sparklines and the day-over-day change, coloured by whether the change is good; Delivery health rings (delivered, online in the last 7 days, replied within 5 minutes, queue), each with a one-line context; the Account's Destinations.
+- Connector logs: the Connector output as-is, from the in-memory buffer (ADR-0007 amendment).
+- Visual language: neutral palette on a soft lilac-grey canvas, white cards; official logos and status dots are the only colours. Colours and surfaces are CSS variables in `web/src/tokens.css`.
+- Logos come from each brand's official kit and follow its usage rules.
+- The metrics need data the Bridge must record: time to first reply per Conversation, and Account connect and disconnect times.
