@@ -1,4 +1,4 @@
-use crate::message::InboundText;
+use crate::message::{AccountId, InboundText, OutboundId, OutboundText};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Recorded {
@@ -14,4 +14,16 @@ pub trait EventStore {
 pub trait DestinationPort {
     type Error;
     fn deliver(&mut self, message: &InboundText) -> Result<(), Self::Error>;
+}
+
+pub trait OutboundQueue {
+    type Error;
+    fn enqueue(&mut self, message: &OutboundText) -> Result<Recorded, Self::Error>;
+    fn pending(&mut self, account: &AccountId) -> Result<Vec<OutboundText>, Self::Error>;
+    fn mark_sent(&mut self, id: &OutboundId) -> Result<(), Self::Error>;
+}
+
+pub trait ConnectorPort {
+    type Error;
+    fn send(&mut self, message: &OutboundText) -> Result<(), Self::Error>;
 }
