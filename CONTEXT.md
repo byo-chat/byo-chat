@@ -19,6 +19,10 @@ New, Authenticating, Connected, Reconnecting, Disconnected, Expired (requires re
 Third-party software (CLI or bridge) that byo-chat supervises to operate Accounts on a Network.
 _Avoid_: driver, plugin
 
+**Self-Update**:
+Replacing the running byo-chat with a newer published release, only after verifying its signature. Distinct from a Connector update (ADR-0009).
+_Avoid_: upgrade, auto-update
+
 **Strategy**:
 How byo-chat talks to a Connector: Stream, Poll or Matrix.
 
