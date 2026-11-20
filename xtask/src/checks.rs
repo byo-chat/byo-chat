@@ -40,6 +40,7 @@ pub(crate) struct Check {
 }
 
 const SCRIPTS: &str = "docs/lint-scripts";
+const NPM: &str = if cfg!(windows) { "npm.cmd" } else { "npm" };
 
 fn check(name: &'static str, program: &'static str, args: &[&str]) -> Check {
     Check {
@@ -93,6 +94,14 @@ pub(crate) fn gate(merge_base: &str) -> Vec<Check> {
         check("no new comment", "python", &new_comments),
         check("comment count", "python", &held_comments),
         check("gate scripts", "python", &[&gate_tests, "--tests"]),
+        check(
+            "web install",
+            NPM,
+            &["--prefix", "web", "ci", "--no-fund", "--no-audit"],
+        ),
+        check("web types", NPM, &["--prefix", "web", "run", "check"]),
+        check("web tests", NPM, &["--prefix", "web", "test"]),
+        check("web build", NPM, &["--prefix", "web", "run", "build"]),
     ]
 }
 
