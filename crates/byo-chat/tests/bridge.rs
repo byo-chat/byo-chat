@@ -122,3 +122,55 @@ fn a_reply_submitted_twice_is_sent_once() {
 
     assert_eq!(connector.sent, vec![reply_to_maria()]);
 }
+
+#[derive(Debug, Default)]
+struct ConnectorFailing {
+    failing: Option<OutboundId>,
+    sent: Vec<OutboundText>,
+}
+
+impl ConnectorPort for ConnectorFailing {
+    type Error = String;
+
+    fn send(&mut self, message: &OutboundText) -> Result<(), String> {
+        if self.failing.as_ref() == Some(&message.id) {
+            return Err(String::from("network timeout"));
+        }
+        self.sent.push(message.clone());
+        Ok(())
+    }
+}
+
+fn reply(id: &str, conversation: &str, text: &str) -> OutboundText {
+    OutboundText {
+        id: OutboundId(String::from(id)),
+        account: AccountId(String::from("wa-1")),
+        conversation: ConversationId(String::from(conversation)),
+        text: String::from(text),
+    }
+}
+
+#[test]
+fn a_failing_conversation_holds_its_order_without_blocking_others() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut store = SqliteEventStore::open(&dir.path().join("history.db")).unwrap();
+    let account = AccountId(String::from("wa-1"));
+    let maria_1 = reply("m1", "maria", "first");
+    let maria_2 = reply("m2", "maria", "second");
+    let joao_1 = reply("j1", "joao", "hello");
+    for message in [&maria_1, &maria_2, &joao_1] {
+        submit_reply(&mut store, message).unwrap();
+    }
+    let mut connector = ConnectorFailing {
+        failing: Some(OutboundId(String::from("m1"))),
+        ..ConnectorFailing::default()
+    };
+
+    deliver_pending(&mut store, &mut connector, &account).unwrap();
+    let while_down = connector.sent.clone();
+    connector.failing = None;
+    deliver_pending(&mut store, &mut connector, &account).unwrap();
+
+    assert_eq!(while_down, vec![joao_1.clone()]);
+    assert_eq!(connector.sent, vec![joao_1, maria_1, maria_2]);
+}
