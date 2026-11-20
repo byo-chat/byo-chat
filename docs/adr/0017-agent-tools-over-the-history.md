@@ -32,7 +32,9 @@ Agents (ADR-0005) need to find messages, gather the context around them and buil
 
 **D11.** Destructive or exposing actions need a human approval even with `manage` granted: removing a member, demoting an admin, leaving a Group, changing the profile name or picture, revoking an invite link. The call returns `pending_approval` with an id; the user approves or denies from the tray or the web UI; the caller polls the outcome. Every request, approval and denial is audited.
 
-**D12.** The same tools exist on every surface built on the use cases: MCP, the local HTTP API and WebSocket (ADR-0012), and the console. MCP clients and API tokens carry the tiers of D10, scoped per Account, and follow D11. A person acting in the web UI or the console is the approver, so their actions run without a pending step.
+**D12.** The same tools exist on MCP, the local HTTP API and WebSocket (ADR-0012), and the console. MCP clients and API tokens carry the tiers of D10, scoped per Account, and follow D11. A person acting in the console is the approver, so their actions run without a pending step. The web UI only shows profiles and Groups: it offers no `manage` action, and it is where approvals of D11 are given.
+
+**D13.** When a Connector provides them, byo-chat stores the profile data and the profile picture of every Contact who writes to an Account: display name, about text, phone or username, business details, and the picture as media (ADR-0008: per Account, content-addressed, encrypted). Only the latest picture is kept, replaced when the Connector reports a change; the directory of D8 serves both.
 
 ## Considered options
 
