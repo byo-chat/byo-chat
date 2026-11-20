@@ -33,6 +33,13 @@ Declarative description of a Connector: Network, Strategy, pinned binary and ver
 The common input/output unit of the Bridge (message, media, reaction, edit, deletion, receipt, reply, member join/leave), following Matrix event semantics with an own versioned schema (`byo.*.v1`).
 _Avoid_: payload, Chatwoot message
 
+**Contact**:
+A person's identity on one Network (Network + its id there, such as a phone number or a username). The same identity seen by several of the user's Accounts on that Network is one Contact. byo-chat never links Contacts across Networks; unifying people is a Destination's job (for example Chatwoot).
+_Avoid_: person, customer, lead
+
+**Group**:
+A multi-member chat that exists on a Network, with Contacts as members. Like a Contact, it belongs to the Network, so several Accounts may take part in the same Group.
+
 **Conversation**:
 A dialogue within an Account: direct (1:1) or group. Groups are supported even when the destination does not support them.
 
@@ -67,6 +74,7 @@ byo-chat's role: carrying events between Account and Channel in both directions.
 - Each **Connector** is described by a **Connector Manifest** and uses one **Strategy**
 - Each **Conversation** has exactly one **Responder** at a time; **Handoff** moves it from Agent to human
 - Each **Account** maps to exactly one **Channel** (1:1)
+- A **Contact** or **Group** belongs to a **Network** and may be seen by many of the user's **Accounts** there; a group **Conversation** is an **Account**'s view of a **Group**
 
 ## Flagged ambiguities
 
