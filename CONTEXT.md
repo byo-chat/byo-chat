@@ -36,6 +36,15 @@ A dialogue within an Account: direct (1:1) or group. Groups are supported even w
 A Chatwoot inbox bound to exactly one Account.
 _Avoid_: inbox (in domain code)
 
+**Agent**:
+An AI client acting on Accounts through byo-chat's MCP adapter. Read-only by default; write access is granted per Account, optionally limited to an allowlist of Conversations and rate-limited.
+
+**Responder**:
+Who currently answers a Conversation: the Agent or a human in the Channel.
+
+**Handoff**:
+The moment a human takes over a Conversation in the Channel; from then on the Agent can no longer write to it.
+
 **Bridge**:
 byo-chat's role: carrying events between Account and Channel in both directions.
 
@@ -43,6 +52,7 @@ byo-chat's role: carrying events between Account and Channel in both directions.
 
 - A **Network** has one or more possible **Connectors**; each **Account** uses exactly one **Connector**
 - Each **Connector** is described by a **Connector Manifest** and uses one **Strategy**
+- Each **Conversation** has exactly one **Responder** at a time; **Handoff** moves it from Agent to human
 - Each **Account** maps to exactly one **Channel** (1:1)
 
 ## Flagged ambiguities
