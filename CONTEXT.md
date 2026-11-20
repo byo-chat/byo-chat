@@ -29,6 +29,9 @@ _Avoid_: payload, mensagem do Chatwoot
 **Conversa**:
 Diálogo numa Conta: direta (1:1) ou grupo. Grupos são suportados mesmo quando o destino não os suporta.
 
+**Estado da Conta**:
+Nova, Autenticando, Conectada, Reconectando, Desconectada, Expirada (exige novo login) ou Pausada (pelo usuário). Expirada gera alerta no tray e mensagem de sistema no Canal.
+
 **Canal**:
 Inbox do Chatwoot vinculado a exatamente uma Conta.
 _Avoid_: inbox (no código de domínio)
@@ -47,4 +50,6 @@ O papel do byo-chat: transportar mensagens entre Conta e Canal nos dois sentidos
 - "nat" — resolvido: não é NATS nem NAT traversal embutido; fila é local (ver ADR-0001).
 - Referência de cobertura: WhatsApp (wacli) e Telegram; demais Redes se adaptam.
 - Licença: MIT (mantida; Conectores AGPL ficam isolados como processos).
+- Sessão da Rede pertence ao Conector (pasta por Conta); segredos do byo-chat ficam no cofre do SO.
+- Saída pendente aguarda reconexão até um prazo configurável; depois vira falha visível no Canal.
 - Risco de banimento: responsabilidade do usuário, exibido como disclaimer; o byo-chat não tenta mitigar.
