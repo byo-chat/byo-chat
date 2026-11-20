@@ -1,0 +1,45 @@
+[graph]
+all-features = true
+
+[advisories]
+version = 2
+yanked = "deny"
+
+[licenses]
+version = 2
+allow = ["MIT", "Apache-2.0", "Unicode-3.0"]
+
+[bans]
+multiple-versions = "deny"
+wildcards = "deny"
+allow-wildcard-paths = true
+deny = [
+  { name = "byo-app", wrappers = [
+    "byo-chat",
+  ] },
+  { name = "byo-connector", wrappers = [
+    "byo-chat",
+  ] },
+  { name = "byo-store", wrappers = [
+    "byo-chat",
+  ] },
+  { name = "byo-chatwoot", wrappers = [
+    "byo-chat",
+  ] },
+  { name = "byo-webhook", wrappers = [
+    "byo-chat",
+  ] },
+  { name = "byo-system", wrappers = [
+    "byo-chat",
+  ] },
+  { name = "byo-mcp", wrappers = [
+    "byo-chat",
+  ] },
+  { name = "byo-http", wrappers = [
+    "byo-chat",
+  ] },
+]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
