@@ -6,7 +6,7 @@ Protects: <one or two characteristics from docs/ARCHITECTURE.md §2>
 
 ## Context
 
-<What forces this decision: facts, limits, what was measured (tool and date). Evidence as file:line or issue number. Plain English, short sentences, the words of CONTEXT.md.>
+<What forces this decision: facts, limits, what was measured (tool and date). Evidence as file:line or issue number. Plain English, short sentences, the words of GLOSSARY.md.>
 
 ## Decision
 
