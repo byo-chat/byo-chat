@@ -1,0 +1,20 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.99.1"
+license = "MIT"
+repository = "https://github.com/byo-chat/byo-chat"
+publish = false
+
+[workspace.dependencies]
+byo-domain = { path = "crates/byo-domain" }
+byo-app = { path = "crates/byo-app" }
+byo-connector = { path = "crates/byo-connector" }
+byo-store = { path = "crates/byo-store" }
+byo-chatwoot = { path = "crates/byo-chatwoot" }
+byo-mcp = { path = "crates/byo-mcp" }
+byo-http = { path = "crates/byo-http" }
