@@ -95,3 +95,30 @@ fn a_reply_reaches_the_connector() {
 
     assert_eq!(connector.sent, vec![reply_to_maria()]);
 }
+
+#[test]
+fn a_reply_is_sent_once_when_delivery_runs_twice() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut store = SqliteEventStore::open(&dir.path().join("history.db")).unwrap();
+    let mut connector = RecordingConnector::default();
+    let account = AccountId(String::from("wa-1"));
+
+    submit_reply(&mut store, &reply_to_maria()).unwrap();
+    deliver_pending(&mut store, &mut connector, &account).unwrap();
+    deliver_pending(&mut store, &mut connector, &account).unwrap();
+
+    assert_eq!(connector.sent, vec![reply_to_maria()]);
+}
+
+#[test]
+fn a_reply_submitted_twice_is_sent_once() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut store = SqliteEventStore::open(&dir.path().join("history.db")).unwrap();
+    let mut connector = RecordingConnector::default();
+
+    submit_reply(&mut store, &reply_to_maria()).unwrap();
+    submit_reply(&mut store, &reply_to_maria()).unwrap();
+    deliver_pending(&mut store, &mut connector, &AccountId(String::from("wa-1"))).unwrap();
+
+    assert_eq!(connector.sent, vec![reply_to_maria()]);
+}
