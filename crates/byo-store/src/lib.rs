@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use byo_domain::message::InboundText;
-use byo_domain::ports::EventStore;
+use byo_domain::ports::{EventStore, Recorded};
 use rusqlite::Connection;
 
 #[derive(Debug)]
@@ -50,9 +50,9 @@ impl SqliteEventStore {
 impl EventStore for SqliteEventStore {
     type Error = StoreError;
 
-    fn record_inbound(&mut self, message: &InboundText) -> Result<(), StoreError> {
-        self.connection.execute(
-            "INSERT INTO inbound (account, conversation, network_id, sender, text)
+    fn record_inbound(&mut self, message: &InboundText) -> Result<Recorded, StoreError> {
+        let inserted = self.connection.execute(
+            "INSERT OR IGNORE INTO inbound (account, conversation, network_id, sender, text)
              VALUES (?1, ?2, ?3, ?4, ?5)",
             (
                 &message.account.0,
@@ -62,6 +62,10 @@ impl EventStore for SqliteEventStore {
                 &message.text,
             ),
         )?;
-        Ok(())
+        Ok(if inserted == 0 {
+            Recorded::Duplicate
+        } else {
+            Recorded::New
+        })
     }
 }

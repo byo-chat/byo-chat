@@ -44,3 +44,16 @@ fn inbound_text_reaches_the_destination() {
 
     assert_eq!(destination.delivered, vec![hello_from_maria()]);
 }
+
+#[test]
+fn a_message_received_twice_reaches_the_destination_once() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut store = SqliteEventStore::open(&dir.path().join("history.db")).unwrap();
+    let mut destination = RecordingDestination::default();
+
+    let first = ingest_inbound_text(&mut store, &mut destination, &hello_from_maria());
+    let second = ingest_inbound_text(&mut store, &mut destination, &hello_from_maria());
+
+    assert!(first.is_ok() && second.is_ok(), "{first:?} {second:?}");
+    assert_eq!(destination.delivered, vec![hello_from_maria()]);
+}
