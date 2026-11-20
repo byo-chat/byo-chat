@@ -1,42 +1,18 @@
 # byo-chat
 
-Local bridge: keeps personal messaging Accounts (WhatsApp, Telegram, Instagram, LinkedIn, X, Teams) connected through third-party Connectors and carries their events to Destinations (Chatwoot, webhooks, Agents via MCP). Rust daemon, hexagonal. Docs, code and commits are in English.
+Local bridge: keeps personal messaging Accounts (WhatsApp, Telegram, Instagram, LinkedIn, X, Teams) connected through third-party Connectors and carries their events to Destinations (Chatwoot, webhooks, Agents via MCP). Rust daemon, hexagonal (ports and adapters). Docs, code and commits are in English.
 
-## Language
+Operational guide for agents working on byo-chat. It holds what an agent gets wrong without being told and points to the documents that hold the details. When a rule here and its source document disagree, the source is correct: fix this file in the same change. Write docs in plain English: short sentences, common words, no idioms.
 
-Name every type, function, test and commit with the terms of `CONTEXT.md` (Account, Connector, Canonical Event, Destination, Handoff...). Read it before naming anything; a term missing there is a question for the human, then a new glossary entry.
-
-## Architecture map
-
-| Crate | Role |
-|---|---|
-| `byo-domain` | Canonical Events, Account, Conversation, policies, port traits. Pure: no I/O, no async |
-| `byo-app` | use cases; owns delivery rules (retry, dead letter, ordering, rate limit) |
-| `byo-connector` | Connector supervisor, Stream/Poll/Matrix Strategies, Manifest; owns process spawns |
-| `byo-store` | SQLite: `control.db` and one `history.db` per Account |
-| `byo-chatwoot`, `byo-webhook` | `DestinationPort` adapters |
-| `byo-system` | OS keychain, real `Clock` and `Rng` |
-| `byo-http`, `byo-mcp` | local API + WebSocket + UI; MCP server |
-| `byo-chat` | composition root: the only crate that wires adapters; owns config and logging |
-
-Dependencies point inward to `byo-domain`; `cargo-deny` refuses an adapter used by anything but `byo-chat`.
-
-Before changing an area, read its decision in `docs/adr/`:
-
-- Connectors, sidecars, Manifests, updates → 0002, 0009
-- event schema, groups, interactive messages → 0003, 0006
-- daemon, UI, tray, console commands → 0004
-- Agents, MCP, Handoff → 0005
-- storage, queues, delivery, encryption, retention → 0001, 0007, 0008, 0011
-- Bridge Protocol, webhooks, WebSocket, Chatwoot transport → 0012
-- crates, ports, owner modules → 0010, 0013
-- tests → 0014
-
-A change that contradicts an ADR starts as a question to the human; an accepted answer becomes a new ADR.
+- **[CONTEXT.md](./CONTEXT.md)**: the ubiquitous language. Before you name a type, function, test, flag or anything a user sees, search it for the term (`**Term**:`). A missing term is a question for the human, then a new entry.
+- **[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)**: crates, allowed edges, fitness functions, trust boundaries. Read its §1 before you add a crate, a dependency between crates, a port, or a call to an outside system.
+- **[docs/adr/](./docs/adr/)**: the decisions; ARCHITECTURE.md §3 names the ADR of each crate. A change that contradicts an ADR, or crosses a boundary no ADR covers, starts as a question to the human; the answer becomes an ADR from [the template](./docs/adr/TEMPLATE.md).
+- **[docs/TESTING.md](./docs/TESTING.md)**: when a test is done. Read it before you add, change or review a test.
+- **[SECURITY.md](./SECURITY.md)**: read it with ARCHITECTURE.md §6 before you add a secret, a token check, a path from the network, or anything a Connector or an Agent receives.
 
 ## Workflow
 
-Build in tracer bullets: one vertical slice through every layer, then the next. Each slice runs red → green: a failing test at one of the seams of ADR-0014, then the least code that turns it green, then refactor with the suite green. Use the `/tdd` skill for the loop. Use cases are the primary seam: real SQLite in a temp file, fakes only for Connector, Destination, SecretStore, Clock and Rng. Assert behaviour the caller observes, with expected values from a literal, a recorded Connector output or the spec.
+Build in tracer bullets: one vertical slice through every layer, then the next. Each slice runs red → green: a failing test at one of the seams of ADR-0014, then the least code that turns it green, then refactor with the suite green. Use the `/tdd` skill for the loop. Use cases are the primary seam: real SQLite in a temp file, fakes only for Connector, Destination, SecretStore, Clock and Rng. A test is done by the rules of `docs/TESTING.md`.
 
 Release and commit rules: `docs/versioning.md`, read before tagging a release, writing a commit message, or changing anything a user or integrator depends on (Bridge Protocol, HTTP API, MCP tools, Manifest format, config, CLI).
 

@@ -1,5 +1,7 @@
 # byo-chat Bridge Protocol: CloudEvents over webhook and local API; Chatwoot as one adapter
 
+Status: proposed
+
 Chatwoot does not define the contract; it is one destination among others (n8n, CRMs, own products). byo-chat exposes its own Bridge Protocol: Canonical Events wrapped in a CloudEvents JSON envelope, over deliberately few transports:
 
 - Outbound webhooks (byo-chat → subscriber), HMAC-signed, using the delivery guarantees of ADR-0011.

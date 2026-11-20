@@ -1,5 +1,7 @@
 # Chatwoot projection: auto-provisioned Channels and groups as contacts
 
+Status: proposed
+
 Chatwoot has no group concept in any native channel. We follow the de-facto pattern of existing bridges (Evolution API, WAHA, unoapi-cloud) and fix their known weaknesses:
 
 - Channels: when an Account is linked, byo-chat idempotently creates a Chatwoot API inbox (lookup before create); reusing an existing inbox by ID remains possible.

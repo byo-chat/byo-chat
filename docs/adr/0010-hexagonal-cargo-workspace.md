@@ -1,5 +1,7 @@
 # Hexagonal Cargo workspace with dependency-checked layers
 
+Status: accepted
+
 The code is a Cargo workspace with one crate per layer: `byo-domain` (Canonical Events, Account, Conversation, Account State, port traits; no I/O, no async runtime), `byo-app` (use cases orchestrating ports), driven adapters `byo-connector`, `byo-store` (`AccountRegistry` on `control.db`, `EventStore`/`OutboundQueue` per Account), `byo-chatwoot` and `byo-webhook` (both implementing `DestinationPort`), `byo-system` (OS keychain `SecretStore`, real `Clock` and `Rng`), driving adapters `byo-mcp`, `byo-http`, and the `byo-chat` binary as composition root. The domain never depends on an adapter, and adapters never depend on each other: only the `byo-chat` composition root wires them (it also mounts the MCP router beside the HTTP API on one server). `cargo-deny` bans enforce this with `wrappers`. Fakes exist only for ports at the system boundary: `ConnectorPort`, `DestinationPort`, `SecretStore`, and the `Clock` and `Rng` ports that make time (backoff, retention, polling, deadlines) and jitter deterministic. Ports to our own code (`EventStore`, `OutboundQueue`) are never faked: tests run them on real SQLite in a temporary file. Every Connector adapter must pass a shared contract test suite fed with recorded real Connector output (e.g. wacli NDJSON). Stack: tokio, axum, serde, rmcp, and rusqlite (not sqlx) because SQLCipher arrives in v0.2 and rusqlite supports it via `bundled-sqlcipher`.
 
 ## Considered Options

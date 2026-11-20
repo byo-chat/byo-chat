@@ -7,6 +7,7 @@
     reason = "the gate owns spawning the checks it runs (ADR-0013)"
 )]
 
+mod adr;
 mod checks;
 
 use std::process::{Command, ExitCode};
