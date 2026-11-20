@@ -1,0 +1,2 @@
+# docs/lint-scripts is the lint-gate skill copy, kept byte-identical to upstream
+exclude = ["docs/lint-scripts/**", "target/**"]

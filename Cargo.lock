@@ -5,31 +5,18 @@ version = 4
 [[package]]
 name = "byo-app"
 version = "0.0.0"
-dependencies = [
- "byo-domain",
-]
 
 [[package]]
 name = "byo-chat"
 version = "0.0.0"
-dependencies = [
- "byo-app",
- "byo-domain",
-]
 
 [[package]]
 name = "byo-chatwoot"
 version = "0.0.0"
-dependencies = [
- "byo-domain",
-]
 
 [[package]]
 name = "byo-connector"
 version = "0.0.0"
-dependencies = [
- "byo-domain",
-]
 
 [[package]]
 name = "byo-domain"
@@ -38,20 +25,15 @@ version = "0.0.0"
 [[package]]
 name = "byo-http"
 version = "0.0.0"
-dependencies = [
- "byo-domain",
-]
 
 [[package]]
 name = "byo-mcp"
 version = "0.0.0"
-dependencies = [
- "byo-domain",
-]
 
 [[package]]
 name = "byo-store"
 version = "0.0.0"
-dependencies = [
- "byo-domain",
-]
+
+[[package]]
+name = "xtask"
+version = "0.0.0"
