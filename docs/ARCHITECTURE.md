@@ -43,6 +43,7 @@ A new ADR names the characteristic it serves in its `Protects:` line.
 | `byo-http`, `byo-mcp` | local API, WebSocket and UI; MCP server | ADR-0004, ADR-0005, ADR-0012 |
 | `byo-chat` | composition root; owns config and the log sink | ADR-0010, ADR-0013 |
 | `xtask` | the gate | ADR-0013 |
+| `web/` | Svelte + TypeScript web UI; text from the Fluent catalog `web/locales/en.ftl`; built to static files that `byo-http` serves | ADR-0004, ADR-0015 |
 
 ## 4. Allowed edges
 
