@@ -45,6 +45,12 @@ Who currently answers a Conversation: the Agent or a human in the Channel.
 **Handoff**:
 The moment a human takes over a Conversation in the Channel; from then on the Agent can no longer write to it.
 
+**Bridge Protocol**:
+byo-chat's own contract with destinations: Canonical Events in a CloudEvents envelope, delivered by signed webhook, accepted through the local API, and exposed to Agents via MCP.
+
+**Destination**:
+Any system consuming the Bridge Protocol (Chatwoot, n8n, a CRM). Chatwoot is one Destination, not the contract.
+
 **Bridge**:
 byo-chat's role: carrying events between Account and Channel in both directions.
 
