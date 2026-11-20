@@ -8,6 +8,8 @@ repository.workspace = true
 publish.workspace = true
 
 [dependencies]
+byo-domain = { path = "../byo-domain" }
+rusqlite = { version = "0.43.0", features = ["bundled"] }
 
 [lints]
 workspace = true
