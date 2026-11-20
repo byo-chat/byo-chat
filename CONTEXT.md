@@ -22,6 +22,13 @@ Forma como o byo-chat conversa com um Conector: Stream, Poll ou Matrix.
 **Manifesto de Conector**:
 Descrição declarativa de um Conector: Rede, Estratégia, binário e versão, comandos de evento/envio/saúde e mapeamento para a Mensagem canônica.
 
+**Evento canônico**:
+Unidade comum de entrada e saída da Ponte (mensagem, mídia, reação, edição, exclusão, recibo, resposta, entrada/saída de membro), com semântica dos eventos Matrix e esquema próprio versionado (`byo.*.v1`).
+_Avoid_: payload, mensagem do Chatwoot
+
+**Conversa**:
+Diálogo numa Conta: direta (1:1) ou grupo. Grupos são suportados mesmo quando o destino não os suporta.
+
 **Canal**:
 Inbox do Chatwoot vinculado a exatamente uma Conta.
 _Avoid_: inbox (no código de domínio)
@@ -38,4 +45,6 @@ O papel do byo-chat: transportar mensagens entre Conta e Canal nos dois sentidos
 ## Flagged ambiguities
 
 - "nat" — resolvido: não é NATS nem NAT traversal embutido; fila é local (ver ADR-0001).
+- Referência de cobertura: WhatsApp (wacli) e Telegram; demais Redes se adaptam.
+- Licença: MIT (mantida; Conectores AGPL ficam isolados como processos).
 - Risco de banimento: responsabilidade do usuário, exibido como disclaimer; o byo-chat não tenta mitigar.
