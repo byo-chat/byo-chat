@@ -16,6 +16,12 @@ _Avoid_: sessão, perfil
 Software de terceiros (CLI ou bridge) que o byo-chat supervisiona para operar Contas de uma Rede.
 _Avoid_: driver, plugin
 
+**Estratégia**:
+Forma como o byo-chat conversa com um Conector: Stream, Poll ou Matrix.
+
+**Manifesto de Conector**:
+Descrição declarativa de um Conector: Rede, Estratégia, binário e versão, comandos de evento/envio/saúde e mapeamento para a Mensagem canônica.
+
 **Canal**:
 Inbox do Chatwoot vinculado a exatamente uma Conta.
 _Avoid_: inbox (no código de domínio)
@@ -26,6 +32,7 @@ O papel do byo-chat: transportar mensagens entre Conta e Canal nos dois sentidos
 ## Relationships
 
 - Uma **Rede** tem um ou mais **Conectores** possíveis; cada **Conta** usa exatamente um **Conector**
+- Cada **Conector** é descrito por um **Manifesto** e usa uma **Estratégia**
 - Cada **Conta** mapeia para exatamente um **Canal** (1:1)
 
 ## Flagged ambiguities
