@@ -1,6 +1,6 @@
 # Architecture
 
-The map of byo-chat's architecture. It points to the decisions in [adr/](./adr/) and the words in [CONTEXT.md](../CONTEXT.md); it does not repeat them. When this file and an ADR disagree, the ADR is correct: fix this file.
+The map of byo-chat's architecture. It points to the decisions in [adr/](./adr/) and the words in [GLOSSARY.md](../GLOSSARY.md); it does not repeat them. When this file and an ADR disagree, the ADR is correct: fix this file.
 
 ## 1. How to use this file
 

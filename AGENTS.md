@@ -4,11 +4,21 @@ Local bridge: keeps personal messaging Accounts (WhatsApp, Telegram, Instagram, 
 
 Operational guide for agents working on byo-chat. It holds what an agent gets wrong without being told and points to the documents that hold the details. When a rule here and its source document disagree, the source is correct: fix this file in the same change. Write docs in plain English: short sentences, common words, no idioms.
 
-- **[CONTEXT.md](./CONTEXT.md)**: the ubiquitous language. Before you name a type, function, test, flag or anything a user sees, search it for the term (`**Term**:`). A missing term is a question for the human, then a new entry.
+- **[GLOSSARY.md](./GLOSSARY.md)**: the ubiquitous language. Before you name a type, function, test, flag or anything a user sees, search it for the term (`**Term**:`). A missing term is a question for the human, then a new entry.
 - **[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)**: crates, allowed edges, fitness functions, trust boundaries. Read its §1 before you add a crate, a dependency between crates, a port, or a call to an outside system.
 - **[docs/adr/](./docs/adr/)**: the decisions; ARCHITECTURE.md §3 names the ADR of each crate. A change that contradicts an ADR, or crosses a boundary no ADR covers, starts as a question to the human; the answer becomes an ADR from [the template](./docs/adr/TEMPLATE.md).
 - **[docs/TESTING.md](./docs/TESTING.md)**: when a test is done. Read it before you add, change or review a test.
 - **[SECURITY.md](./SECURITY.md)**: read it with ARCHITECTURE.md §6 before you add a secret, a token check, a path from the network, or anything a Connector or an Agent receives.
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues in `byo-chat/byo-chat`, through the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Single-context: `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
 
 ## Workflow
 
