@@ -3,15 +3,25 @@
     reason = "an integration test crate is the test module"
 )]
 
+use std::cell::Cell;
 use std::convert::Infallible;
 
 use byo_app::ingest::ingest_inbound_text;
-use byo_app::outbound::{deliver_pending, submit_reply};
+use byo_app::outbound::{DEFAULT_DEADLINE_SECONDS, DeliveryPolicy, deliver_pending, submit_reply};
 use byo_domain::message::{
-    AccountId, ConversationId, InboundText, NetworkMessageId, OutboundId, OutboundText,
+    AccountId, ConversationId, InboundText, NetworkMessageId, OutboundId, OutboundText, Timestamp,
 };
-use byo_domain::ports::{ConnectorPort, DestinationPort};
+use byo_domain::ports::{Clock, ConnectorPort, DestinationPort};
 use byo_store::SqliteEventStore;
+
+#[derive(Debug, Default)]
+struct ManualClock(Cell<i64>);
+
+impl Clock for ManualClock {
+    fn now(&self) -> Timestamp {
+        Timestamp(self.0.get())
+    }
+}
 
 #[derive(Debug, Default)]
 struct RecordingDestination {
@@ -88,10 +98,18 @@ fn reply_to_maria() -> OutboundText {
 fn a_reply_reaches_the_connector() {
     let dir = tempfile::tempdir().unwrap();
     let mut store = SqliteEventStore::open(&dir.path().join("history.db")).unwrap();
+    let clock = ManualClock::default();
     let mut connector = RecordingConnector::default();
 
-    submit_reply(&mut store, &reply_to_maria()).unwrap();
-    deliver_pending(&mut store, &mut connector, &AccountId(String::from("wa-1"))).unwrap();
+    submit_reply(&mut store, &clock, &reply_to_maria()).unwrap();
+    deliver_pending(
+        &mut store,
+        &mut connector,
+        &clock,
+        &AccountId(String::from("wa-1")),
+        DeliveryPolicy::default(),
+    )
+    .unwrap();
 
     assert_eq!(connector.sent, vec![reply_to_maria()]);
 }
@@ -100,12 +118,27 @@ fn a_reply_reaches_the_connector() {
 fn a_reply_is_sent_once_when_delivery_runs_twice() {
     let dir = tempfile::tempdir().unwrap();
     let mut store = SqliteEventStore::open(&dir.path().join("history.db")).unwrap();
+    let clock = ManualClock::default();
     let mut connector = RecordingConnector::default();
     let account = AccountId(String::from("wa-1"));
 
-    submit_reply(&mut store, &reply_to_maria()).unwrap();
-    deliver_pending(&mut store, &mut connector, &account).unwrap();
-    deliver_pending(&mut store, &mut connector, &account).unwrap();
+    submit_reply(&mut store, &clock, &reply_to_maria()).unwrap();
+    deliver_pending(
+        &mut store,
+        &mut connector,
+        &clock,
+        &account,
+        DeliveryPolicy::default(),
+    )
+    .unwrap();
+    deliver_pending(
+        &mut store,
+        &mut connector,
+        &clock,
+        &account,
+        DeliveryPolicy::default(),
+    )
+    .unwrap();
 
     assert_eq!(connector.sent, vec![reply_to_maria()]);
 }
@@ -114,11 +147,19 @@ fn a_reply_is_sent_once_when_delivery_runs_twice() {
 fn a_reply_submitted_twice_is_sent_once() {
     let dir = tempfile::tempdir().unwrap();
     let mut store = SqliteEventStore::open(&dir.path().join("history.db")).unwrap();
+    let clock = ManualClock::default();
     let mut connector = RecordingConnector::default();
 
-    submit_reply(&mut store, &reply_to_maria()).unwrap();
-    submit_reply(&mut store, &reply_to_maria()).unwrap();
-    deliver_pending(&mut store, &mut connector, &AccountId(String::from("wa-1"))).unwrap();
+    submit_reply(&mut store, &clock, &reply_to_maria()).unwrap();
+    submit_reply(&mut store, &clock, &reply_to_maria()).unwrap();
+    deliver_pending(
+        &mut store,
+        &mut connector,
+        &clock,
+        &AccountId(String::from("wa-1")),
+        DeliveryPolicy::default(),
+    )
+    .unwrap();
 
     assert_eq!(connector.sent, vec![reply_to_maria()]);
 }
@@ -155,22 +196,69 @@ fn a_failing_conversation_holds_its_order_without_blocking_others() {
     let dir = tempfile::tempdir().unwrap();
     let mut store = SqliteEventStore::open(&dir.path().join("history.db")).unwrap();
     let account = AccountId(String::from("wa-1"));
+    let clock = ManualClock::default();
     let maria_1 = reply("m1", "maria", "first");
     let maria_2 = reply("m2", "maria", "second");
     let joao_1 = reply("j1", "joao", "hello");
     for message in [&maria_1, &maria_2, &joao_1] {
-        submit_reply(&mut store, message).unwrap();
+        submit_reply(&mut store, &clock, message).unwrap();
     }
     let mut connector = ConnectorFailing {
         failing: Some(OutboundId(String::from("m1"))),
         ..ConnectorFailing::default()
     };
 
-    deliver_pending(&mut store, &mut connector, &account).unwrap();
+    deliver_pending(
+        &mut store,
+        &mut connector,
+        &clock,
+        &account,
+        DeliveryPolicy::default(),
+    )
+    .unwrap();
     let while_down = connector.sent.clone();
     connector.failing = None;
-    deliver_pending(&mut store, &mut connector, &account).unwrap();
+    deliver_pending(
+        &mut store,
+        &mut connector,
+        &clock,
+        &account,
+        DeliveryPolicy::default(),
+    )
+    .unwrap();
 
     assert_eq!(while_down, vec![joao_1.clone()]);
     assert_eq!(connector.sent, vec![joao_1, maria_1, maria_2]);
+}
+
+#[test]
+fn a_reply_past_its_deadline_becomes_a_dead_letter() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut store = SqliteEventStore::open(&dir.path().join("history.db")).unwrap();
+    let clock = ManualClock::default();
+    let account = AccountId(String::from("wa-1"));
+    let policy = DeliveryPolicy::default();
+    let mut connector = ConnectorFailing {
+        failing: Some(OutboundId(String::from("cw-msg-42"))),
+        ..ConnectorFailing::default()
+    };
+    submit_reply(&mut store, &clock, &reply_to_maria()).unwrap();
+
+    clock.0.set(DEFAULT_DEADLINE_SECONDS);
+    let at_deadline =
+        deliver_pending(&mut store, &mut connector, &clock, &account, policy).unwrap();
+    clock.0.set(DEFAULT_DEADLINE_SECONDS + 1);
+    let past = deliver_pending(&mut store, &mut connector, &clock, &account, policy).unwrap();
+    connector.failing = None;
+    let after = deliver_pending(&mut store, &mut connector, &clock, &account, policy).unwrap();
+
+    assert_eq!(at_deadline.failed.len(), 1);
+    assert_eq!(
+        past.dead_lettered,
+        vec![OutboundId(String::from("cw-msg-42"))]
+    );
+    assert_eq!(
+        (after.sent, after.dead_lettered, connector.sent),
+        (Vec::new(), Vec::new(), Vec::new())
+    );
 }

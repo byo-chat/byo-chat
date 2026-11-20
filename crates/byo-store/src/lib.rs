@@ -1,6 +1,8 @@
 use std::path::Path;
 
-use byo_domain::message::{AccountId, ConversationId, InboundText, OutboundId, OutboundText};
+use byo_domain::message::{
+    AccountId, ConversationId, InboundText, OutboundId, OutboundText, PendingOutbound, Timestamp,
+};
 use byo_domain::ports::{EventStore, OutboundQueue, Recorded};
 use rusqlite::Connection;
 
@@ -48,7 +50,8 @@ impl SqliteEventStore {
                 account TEXT NOT NULL,
                 conversation TEXT NOT NULL,
                 text TEXT NOT NULL,
-                sent INTEGER NOT NULL DEFAULT 0
+                enqueued_at INTEGER NOT NULL,
+                state TEXT NOT NULL DEFAULT 'pending'
             );",
         )?;
         Ok(Self { connection })
@@ -85,31 +88,35 @@ fn recorded(inserted: usize) -> Recorded {
 impl OutboundQueue for SqliteEventStore {
     type Error = StoreError;
 
-    fn enqueue(&mut self, message: &OutboundText) -> Result<Recorded, StoreError> {
+    fn enqueue(&mut self, message: &OutboundText, at: Timestamp) -> Result<Recorded, StoreError> {
         let inserted = self.connection.execute(
-            "INSERT OR IGNORE INTO outbound (id, account, conversation, text)
-             VALUES (?1, ?2, ?3, ?4)",
+            "INSERT OR IGNORE INTO outbound (id, account, conversation, text, enqueued_at)
+             VALUES (?1, ?2, ?3, ?4, ?5)",
             (
                 &message.id.0,
                 &message.account.0,
                 &message.conversation.0,
                 &message.text,
+                at.0,
             ),
         )?;
         Ok(recorded(inserted))
     }
 
-    fn pending(&mut self, account: &AccountId) -> Result<Vec<OutboundText>, StoreError> {
+    fn pending(&mut self, account: &AccountId) -> Result<Vec<PendingOutbound>, StoreError> {
         let mut statement = self.connection.prepare(
-            "SELECT id, conversation, text FROM outbound
-             WHERE account = ?1 AND sent = 0 ORDER BY seq",
+            "SELECT id, conversation, text, enqueued_at FROM outbound
+             WHERE account = ?1 AND state = 'pending' ORDER BY seq",
         )?;
         let rows = statement.query_map([&account.0], |row| {
-            Ok(OutboundText {
-                id: OutboundId(row.get(0)?),
-                account: account.clone(),
-                conversation: ConversationId(row.get(1)?),
-                text: row.get(2)?,
+            Ok(PendingOutbound {
+                message: OutboundText {
+                    id: OutboundId(row.get(0)?),
+                    account: account.clone(),
+                    conversation: ConversationId(row.get(1)?),
+                    text: row.get(2)?,
+                },
+                enqueued_at: Timestamp(row.get(3)?),
             })
         })?;
         Ok(rows.collect::<Result<_, _>>()?)
@@ -117,7 +124,15 @@ impl OutboundQueue for SqliteEventStore {
 
     fn mark_sent(&mut self, id: &OutboundId) -> Result<(), StoreError> {
         self.connection
-            .execute("UPDATE outbound SET sent = 1 WHERE id = ?1", [&id.0])?;
+            .execute("UPDATE outbound SET state = 'sent' WHERE id = ?1", [&id.0])?;
+        Ok(())
+    }
+
+    fn dead_letter(&mut self, id: &OutboundId) -> Result<(), StoreError> {
+        self.connection.execute(
+            "UPDATE outbound SET state = 'dead_letter' WHERE id = ?1",
+            [&id.0],
+        )?;
         Ok(())
     }
 }

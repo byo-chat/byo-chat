@@ -1,4 +1,6 @@
-use crate::message::{AccountId, InboundText, OutboundId, OutboundText};
+use crate::message::{
+    AccountId, InboundText, OutboundId, OutboundText, PendingOutbound, Timestamp,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Recorded {
@@ -18,12 +20,17 @@ pub trait DestinationPort {
 
 pub trait OutboundQueue {
     type Error;
-    fn enqueue(&mut self, message: &OutboundText) -> Result<Recorded, Self::Error>;
-    fn pending(&mut self, account: &AccountId) -> Result<Vec<OutboundText>, Self::Error>;
+    fn enqueue(&mut self, message: &OutboundText, at: Timestamp) -> Result<Recorded, Self::Error>;
+    fn pending(&mut self, account: &AccountId) -> Result<Vec<PendingOutbound>, Self::Error>;
     fn mark_sent(&mut self, id: &OutboundId) -> Result<(), Self::Error>;
+    fn dead_letter(&mut self, id: &OutboundId) -> Result<(), Self::Error>;
 }
 
 pub trait ConnectorPort {
     type Error;
     fn send(&mut self, message: &OutboundText) -> Result<(), Self::Error>;
+}
+
+pub trait Clock {
+    fn now(&self) -> Timestamp;
 }
