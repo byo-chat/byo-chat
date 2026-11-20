@@ -13,6 +13,32 @@ allow = ["MIT", "Apache-2.0", "Unicode-3.0"]
 multiple-versions = "deny"
 wildcards = "deny"
 allow-wildcard-paths = true
+deny = [
+  { name = "byo-app", wrappers = [
+    "byo-chat",
+  ] },
+  { name = "byo-connector", wrappers = [
+    "byo-chat",
+  ] },
+  { name = "byo-store", wrappers = [
+    "byo-chat",
+  ] },
+  { name = "byo-chatwoot", wrappers = [
+    "byo-chat",
+  ] },
+  { name = "byo-webhook", wrappers = [
+    "byo-chat",
+  ] },
+  { name = "byo-system", wrappers = [
+    "byo-chat",
+  ] },
+  { name = "byo-mcp", wrappers = [
+    "byo-chat",
+  ] },
+  { name = "byo-http", wrappers = [
+    "byo-chat",
+  ] },
+]
 
 [sources]
 unknown-registry = "deny"
