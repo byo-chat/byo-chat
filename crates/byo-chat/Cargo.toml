@@ -11,3 +11,9 @@ publish.workspace = true
 
 [lints]
 workspace = true
+
+[dev-dependencies]
+byo-app = { path = "../byo-app" }
+byo-domain = { path = "../byo-domain" }
+byo-store = { path = "../byo-store" }
+tempfile = "3.27.0"

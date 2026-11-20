@@ -17,4 +17,4 @@ Walking skeleton: every rule of the Rust target is an error with no debt list, a
 
 ## Decisions for the human
 
-- D1: protect `main` (every check required, no force push). Only a repository admin can set it.
+- D1: done 2026-11-20 — `main` requires both CI gate jobs, up to date, through a pull request, admins included; no force push or deletion.
