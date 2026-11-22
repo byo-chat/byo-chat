@@ -70,7 +70,7 @@ A new path across a zone needs a row here before it has code.
 
 | Boundary | What crosses | Control |
 |---|---|---|
-| Connector binary → Bridge | third-party output about personal Accounts | pinned, hashed binaries (ADR-0009); output parsed into typed Canonical Events at the adapter edge |
+| Connector binary → Bridge | third-party output about personal Accounts | pinned, hashed binaries (ADR-0009); output parsed into typed Canonical Events at the adapter edge; media paths stay relative inside the Account's media directory (ADR-0002) |
 | Bridge → Connector | commands and a minimal environment | only what the Manifest declares; no byo-chat secret (ADR-0009) |
 | Destination → local API, WebSocket, Chatwoot webhook | replies and commands from the network, through the user's tunnel | token on the API and WebSocket, HMAC on webhooks (ADR-0012) |
 | Agent → MCP | tool calls; inbound messages may carry prompt injection | read-only by default, per-Account write, allowlist, rate limit, Handoff (ADR-0005) |

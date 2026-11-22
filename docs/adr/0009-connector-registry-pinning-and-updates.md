@@ -14,4 +14,5 @@ byo-chat downloads and runs third-party binaries that hold access to personal Ac
 - A Node Connector ships as the official Node LTS runtime, pinned with its SHA-256 like any binary, plus one esbuild bundle per Connector. This replaces `bun build --compile`.
 - A Node security fix updates the runtime without rebuilding a Connector.
 - A Node single executable application stays a later one-file option.
+- In v0.1, the `wa-infinite` shim lives in `connectors/wa-infinite/` inside `byo-chat/byo-chat` and moves to `byo-chat/connectors` in v0.4 (ADR-0002 amendment).
 - Evidence: `docs/research/node-connector-packaging.md` on branch `research/node-connector-packaging`.
