@@ -14,3 +14,8 @@ The Bridge's internal format is an own versioned schema (`byo.*.v1`) following M
 The schema includes `byo.interactive.v1` (buttons, lists, polls, CTA, carousel). Each Connector Manifest declares its capabilities (e.g. `buttons`, `lists`, `polls`). When a Connector lacks a capability, byo-chat degrades automatically: buttons/lists → native poll → numbered text menu, mapping the contact's reply back to a selection. wacli cannot send buttons or lists (only polls and selecting inbound options), so an optional second WhatsApp Connector (`wa-infinite`, a bun-compiled shim over the InfiniteAPI Baileys fork) provides native interactive messages, chosen per Account.
 
 WhatsApp Connectors are wacli (default) and wa-infinite. WAHA was considered and rejected: it is a Docker-hosted HTTP server that does not fit byo-chat's managed-sidecar model (ADR-0002), and it adds no capability beyond the two chosen Connectors.
+
+## Amendment 2026-11-22 — wa-infinite first
+
+- v0.1 ships one WhatsApp Connector: wa-infinite. It is the default.
+- wacli stays a planned alternative per Account in a later version.

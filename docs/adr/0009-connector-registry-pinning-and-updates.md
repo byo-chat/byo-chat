@@ -8,3 +8,10 @@ byo-chat downloads and runs third-party binaries that hold access to personal Ac
 
 - Auto-updating to latest: rejected — silent behaviour changes and session breakage on personal Accounts.
 - Go/Rust-only Connectors: rejected — would exclude Instagram and Beeper CLIs, which only exist in TypeScript.
+
+## Amendment 2026-11-22 — Node Connectors
+
+- A Node Connector ships as the official Node LTS runtime, pinned with its SHA-256 like any binary, plus one esbuild bundle per Connector. This replaces `bun build --compile`.
+- A Node security fix updates the runtime without rebuilding a Connector.
+- A Node single executable application stays a later one-file option.
+- Evidence: `docs/research/node-connector-packaging.md` on branch `research/node-connector-packaging`.

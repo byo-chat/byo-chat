@@ -79,7 +79,7 @@ byo-chat's role: carrying events between Account and Channel in both directions.
 ## Flagged ambiguities
 
 - "nat" — resolved: neither NATS nor embedded NAT traversal; the queue is local (see ADR-0001).
-- Coverage reference: WhatsApp (wacli) and Telegram; other Networks adapt to them.
+- Coverage reference: WhatsApp (wa-infinite) and Telegram; other Networks adapt to them.
 - License: MIT (kept; AGPL Connectors stay isolated as separate processes).
 - Network session data belongs to the Connector (one folder per Account); byo-chat secrets live in the OS keychain.
 - Pending outbound events wait for reconnection up to a configurable deadline, then surface as a visible failure in the Channel.
